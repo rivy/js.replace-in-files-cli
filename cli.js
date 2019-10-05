@@ -1,72 +1,55 @@
 #!/usr/bin/env node
 'use strict';
-const meow = require('meow');
+
 const arrify = require('arrify');
+const cli = require('yargs');
+
 const replaceInFiles = require('./api');
 
-const cli = meow(`
-	Usage
-	  $ replace-in-files <files…>
+const {terminalWidth} = cli;
 
-	Options
-	  --regex           Regex pattern to find  (Can be set multiple times)
-	  --string          String to find  (Can be set multiple times)
-	  --replacement     Replacement string  (Required)
-	  --ignore-case     Search case-insensitively
-	  --no-glob         Disable globbing
+cli.version()
+	.usage('\nUsage:\n  $0 <files...>')
+	.option('regex', {type: 'string', describe: 'Regex pattern to find'})
+	.option('string', {type: 'string', describe: 'String to find'})
+	.option('replacement', {type: 'string', describe: 'Replacement string'})
+	.option('ignore-case', {type: 'boolean', describe: 'Search case-insensitively', default: false})
+	.option('glob', {type: 'boolean', describe: 'Enable/disable file globbing', default: true})
+	.wrap(Math.min(90, terminalWidth))
+	.example(`$ $0 --string='horse' --regex='unicorn|rainbow' --replacement='🦄' foo.md
+$ $0  --regex='v\\d+\\.\\d+\\.\\d+' --replacement=v$npm_package_version foo.css
+$ $0  --string='blob' --replacement='blog' 'some/**/[gb]lob/*' '!some/glob/foo'
+`);
 
-	Examples
-	  $ replace-in-files --string='horse' --regex='unicorn|rainbow' --replacement='🦄' foo.md
-	  $ replace-in-files --regex='v\\d+\\.\\d+\\.\\d+' --replacement=v$npm_package_version foo.css
-	  $ replace-in-files --string='blob' --replacement='blog' 'some/**/[gb]lob/*' '!some/glob/foo'
+console.log(cli.argv);
 
-	You can use the same replacement patterns as with \`String#replace()\`, like \`$&\`.
-`, {
-	flags: {
-		regex: {
-			type: 'string'
-		},
-		string: {
-			type: 'string'
-		},
-		replacement: {
-			type: 'string'
-		},
-		ignoreCase: {
-			type: 'boolean',
-			default: false
-		},
-		glob: {
-			type: 'boolean',
-			default: true
-		}
-	}
-});
-
-if (cli.input.length === 0) {
+if (cli.argv._.length === 0) {
 	console.error('Specify one or more file paths');
 	process.exit(1);
 }
 
-if (!cli.flags.regex && !cli.flags.string) {
+if (!cli.argv.regex && !cli.argv.string) {
 	console.error('Specify at least `--regex` or `--string`');
 	process.exit(1);
 }
 
 // TODO: Use the required functionality in `meow` when v6 is out
-if (cli.flags.replacement === undefined) {
+if (cli.argv.replacement === undefined) {
 	console.error('The `--replacement` flag is required');
 	process.exit(1);
 }
 
 (async () => {
-	await replaceInFiles(cli.input, {
+	await replaceInFiles(cli.argv._, {
 		find: [
-			...arrify(cli.flags.string),
-			...arrify(cli.flags.regex).map(regexString => new RegExp(regexString, 'g'))
+			...arrify(cli.argv.string),
+			...arrify(cli.argv.regex).map(regexString => new RegExp(regexString, 'g'))
 		],
-		replacement: cli.flags.replacement,
-		ignoreCase: cli.flags.ignoreCase,
-		glob: cli.flags.glob
+		replacement: cli.argv.replacement,
+		ignoreCase: cli.argv.ignoreCase,
+		glob: cli.argv.glob
 	});
-})();
+})().catch(error => {
+	console.error(error);
+	process.exit(1);
+});
