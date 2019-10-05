@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+
+// # spell-checker:ignore arrify globbing
+
 'use strict';
 
 const arrify = require('arrify');

@@ -1,3 +1,5 @@
+// # spell-checker:ignore SindreSorhus arrify globby promisify regexes
+
 'use strict';
 const {promisify} = require('util');
 const path = require('path');
