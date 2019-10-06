@@ -13,6 +13,7 @@ const {terminalWidth} = cli;
 
 cli.version()
 	.usage('\nUsage:\n  $0 <files...>')
+	.option('debug', {type: 'boolean', describe: 'Show debug output', default: false})
 	.option('regex', {type: 'string', describe: 'Regex pattern to find'})
 	.option('string', {type: 'string', describe: 'String to find'})
 	.option('replacement', {type: 'string', describe: 'Replacement string'})
@@ -24,7 +25,9 @@ $ $0  --regex='v\\d+\\.\\d+\\.\\d+' --replacement=v$npm_package_version foo.css
 $ $0  --string='blob' --replacement='blog' 'some/**/[gb]lob/*' '!some/glob/foo'
 `);
 
-console.log(cli.argv);
+if (cli.argv.debug) {
+	console.log(cli.argv);
+}
 
 if (cli.argv._.length === 0) {
 	console.error('Specify one or more file paths');
